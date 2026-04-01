@@ -1,0 +1,23 @@
+a graph that can be used by an autistic person to interpret situations
+
+i could have a table with two scenarios
+
+example:
+
+friendly_scenario:{
+    context:"i made a mistake",
+    words:"you did your best, sure you will do better next time",
+    tone:"ecouraging",
+    facial_expression:"friendly"
+}
+
+sarcasm_scenario:{
+    context:"i made a mistake",
+    words:"great work",
+    tone:"unfriendly",
+    facial_expression:"frown"
+}
+
+what is missed by a table?
+
+even if a field can take different values (e.g. the filed "Tone" can take on the values “Friendly”, “Warm”, “Kind”, "Angry", ... a subset of these values can belong to a Positive Tone Cluster)

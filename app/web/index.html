@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Social Situations Graph Demo</title>
+  <link rel="stylesheet" href="/tokens.css" />
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="https://unpkg.com/cytoscape@3.30.0/dist/cytoscape.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <div id="top-bar">
+      <div id="controls">
+        <label><input id="toggleLiteral" type="checkbox" checked /> Literal channel</label>
+        <label><input id="toggleInference" type="checkbox" checked /> Inference channel</label>
+        <label><input id="toggleEdgeLabels" type="checkbox" /> Edge labels</label>
+        <label class="situation-filter-label">
+          Situation:
+          <select id="situationFilter"><option value="">All</option></select>
+        </label>
+        <label><input id="toggleInterpret" type="checkbox" checked /> Interpret panel</label>
+      </div>
+      <div id="hint">
+        Read top to bottom: observations &rarr; signals &rarr; patterns &rarr; intended meanings.
+        The panel below uses LLM + Neo4j to suggest likely interpretations for your scenario.
+      </div>
+    </div>
+
+    <div id="interpret-panel">
+      <form id="interpretForm" class="stack">
+        <strong>Interpret a social situation</strong>
+        <textarea id="situationInput" placeholder="Example: My coworker said 'great job' with an eye roll after I made a mistake."></textarea>
+        <button id="submitButton" type="submit">Interpret Situation</button>
+      </form>
+      <div id="results" class="results">
+        <div class="muted">Enter a situation to get likely interpretations.</div>
+      </div>
+    </div>
+
+    <div id="cy"></div>
+  </div>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

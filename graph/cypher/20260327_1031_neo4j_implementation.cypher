@@ -1,0 +1,329 @@
+// ============================================================
+// CONSTRAINTS AND INDEXES
+// ============================================================
+
+// Uniqueness constraints for stable-identifier node types
+CREATE CONSTRAINT person_name_unique IF NOT EXISTS
+  FOR (p:Person) REQUIRE p.name IS UNIQUE;
+
+CREATE CONSTRAINT tone_value_unique IF NOT EXISTS
+  FOR (t:Tone) REQUIRE t.value IS UNIQUE;
+
+CREATE CONSTRAINT expression_value_unique IF NOT EXISTS
+  FOR (e:Expression) REQUIRE e.value IS UNIQUE;
+
+CREATE CONSTRAINT context_value_unique IF NOT EXISTS
+  FOR (c:Context) REQUIRE c.value IS UNIQUE;
+
+CREATE CONSTRAINT literal_meaning_value_unique IF NOT EXISTS
+  FOR (lm:LiteralMeaning) REQUIRE lm.value IS UNIQUE;
+
+CREATE CONSTRAINT intended_meaning_value_unique IF NOT EXISTS
+  FOR (im:IntendedMeaning) REQUIRE im.value IS UNIQUE;
+
+CREATE CONSTRAINT situation_id_unique IF NOT EXISTS
+  FOR (s:Situation) REQUIRE s.situationId IS UNIQUE;
+
+CREATE CONSTRAINT pattern_id_unique IF NOT EXISTS
+  FOR (p:Pattern) REQUIRE p.patternId IS UNIQUE;
+
+CREATE CONSTRAINT signal_id_unique IF NOT EXISTS
+  FOR (sig:Signal) REQUIRE sig.signalId IS UNIQUE;
+
+// Indexes for frequent lookups
+CREATE INDEX signal_kind_value IF NOT EXISTS
+  FOR (sig:Signal) ON (sig.kind, sig.valueId);
+
+CREATE INDEX statement_text IF NOT EXISTS
+  FOR (st:Statement) ON (st.text);
+
+// ============================================================
+// SAMPLE DATA LOAD
+// ============================================================
+
+// ------------------------------------------------------------
+// 1. Vocabulary / base nodes
+// ------------------------------------------------------------
+
+// Persons
+MERGE (alice:Person {name: "Alice"});
+MERGE (henry:Person {name: "Henry"});
+
+// Tones
+MERGE (tone_annoyed:Tone {value: "annoyed_tone"});
+MERGE (tone_warm:Tone    {value: "warm_tone"});
+
+// Expressions
+MERGE (expr_eye_roll:Expression {value: "eye_roll"});
+MERGE (expr_smile:Expression    {value: "smile"});
+
+// Contexts
+MERGE (ctx_mistake:Context {value: "mistake_happened"});
+
+// LiteralMeanings
+MERGE (lm_praise:LiteralMeaning       {value: "praise"});
+MERGE (lm_encouragement:LiteralMeaning {value: "encouragement"});
+
+// IntendedMeanings
+MERGE (im_sarcasm:IntendedMeaning      {value: "sarcasm"});
+MERGE (im_criticism:IntendedMeaning    {value: "criticism"});
+MERGE (im_encouragement:IntendedMeaning {value: "encouragement"});
+
+// ------------------------------------------------------------
+// 2. Signal vocabulary nodes (one per distinct kind+valueId)
+// ------------------------------------------------------------
+
+MERGE (sig_lm_praise:Signal      {signalId: "sig_lm_praise",
+                                   kind: "literal_meaning",
+                                   valueId: "praise"});
+
+MERGE (sig_expr_eye_roll:Signal  {signalId: "sig_expr_eye_roll",
+                                   kind: "expression",
+                                   valueId: "eye_roll"});
+
+MERGE (sig_expr_smile:Signal     {signalId: "sig_expr_smile",
+                                   kind: "expression",
+                                   valueId: "smile"});
+
+MERGE (sig_tone_annoyed:Signal   {signalId: "sig_tone_annoyed",
+                                   kind: "tone",
+                                   valueId: "annoyed_tone"});
+
+MERGE (sig_tone_warm:Signal      {signalId: "sig_tone_warm",
+                                   kind: "tone",
+                                   valueId: "warm_tone"});
+
+MERGE (sig_ctx_mistake:Signal    {signalId: "sig_ctx_mistake",
+                                   kind: "context",
+                                   valueId: "mistake_happened"});
+
+// ------------------------------------------------------------
+// 3. Context → GENERATES_SIGNAL bridge
+// ------------------------------------------------------------
+
+MATCH (ctx_mistake:Context {value: "mistake_happened"}),
+      (sig_ctx_mistake:Signal {signalId: "sig_ctx_mistake"})
+MERGE (ctx_mistake)-[:GENERATES_SIGNAL]->(sig_ctx_mistake);
+
+// ------------------------------------------------------------
+// 4. Pattern: Sarcasm
+// ------------------------------------------------------------
+
+MERGE (pat_sarcasm:Pattern {
+  patternId:   "pattern_sarcasm_mistake_praise_annoyed",
+  description: "Praise words + annoyed tone + eye roll in a mistake context suggests sarcasm"
+});
+
+// Pattern REQUIRES its four signals
+MATCH (pat_sarcasm:Pattern  {patternId: "pattern_sarcasm_mistake_praise_annoyed"}),
+      (sig_lm_praise:Signal  {signalId: "sig_lm_praise"}),
+      (sig_expr_eye_roll:Signal {signalId: "sig_expr_eye_roll"}),
+      (sig_tone_annoyed:Signal  {signalId: "sig_tone_annoyed"}),
+      (sig_ctx_mistake:Signal   {signalId: "sig_ctx_mistake"})
+MERGE (pat_sarcasm)-[:REQUIRES]->(sig_lm_praise)
+MERGE (pat_sarcasm)-[:REQUIRES]->(sig_expr_eye_roll)
+MERGE (pat_sarcasm)-[:REQUIRES]->(sig_tone_annoyed)
+MERGE (pat_sarcasm)-[:REQUIRES]->(sig_ctx_mistake);
+
+// Pattern PREDICTS sarcasm with probability 0.8
+MATCH (pat_sarcasm:Pattern      {patternId: "pattern_sarcasm_mistake_praise_annoyed"}),
+      (im_sarcasm:IntendedMeaning {value: "sarcasm"})
+MERGE (pat_sarcasm)-[r:PREDICTS]->(im_sarcasm)
+  ON CREATE SET r.probability = 0.8
+  ON MATCH  SET r.probability = 0.8;
+
+// ------------------------------------------------------------
+// 5. Pattern: Genuine Encouragement
+// ------------------------------------------------------------
+
+MERGE (pat_enc:Pattern {
+  patternId:   "pattern_encouragement_mistake_praise_warm",
+  description: "Praise words + warm tone + smile in a mistake context suggests genuine encouragement"
+});
+
+// Pattern REQUIRES its four signals
+MATCH (pat_enc:Pattern        {patternId: "pattern_encouragement_mistake_praise_warm"}),
+      (sig_lm_praise:Signal    {signalId: "sig_lm_praise"}),
+      (sig_expr_smile:Signal   {signalId: "sig_expr_smile"}),
+      (sig_tone_warm:Signal    {signalId: "sig_tone_warm"}),
+      (sig_ctx_mistake:Signal  {signalId: "sig_ctx_mistake"})
+MERGE (pat_enc)-[:REQUIRES]->(sig_lm_praise)
+MERGE (pat_enc)-[:REQUIRES]->(sig_expr_smile)
+MERGE (pat_enc)-[:REQUIRES]->(sig_tone_warm)
+MERGE (pat_enc)-[:REQUIRES]->(sig_ctx_mistake);
+
+// Pattern PREDICTS encouragement with probability 0.85
+MATCH (pat_enc:Pattern           {patternId: "pattern_encouragement_mistake_praise_warm"}),
+      (im_enc:IntendedMeaning     {value: "encouragement"})
+MERGE (pat_enc)-[r:PREDICTS]->(im_enc)
+  ON CREATE SET r.probability = 0.85
+  ON MATCH  SET r.probability = 0.85;
+
+// ------------------------------------------------------------
+// 6. Situation A — Sarcasm scenario
+// ------------------------------------------------------------
+
+// Statement instance for Situation A
+MERGE (stmt_a:Statement {statementId: "stmt_great_job_a", text: "Great job"});
+
+// Henry said the statement
+MATCH (henry:Person {name: "Henry"}),
+      (stmt_a:Statement {statementId: "stmt_great_job_a"})
+MERGE (henry)-[:SAID]->(stmt_a);
+
+// Statement links to literal meaning and tone
+MATCH (stmt_a:Statement     {statementId: "stmt_great_job_a"}),
+      (lm_praise:LiteralMeaning {value: "praise"}),
+      (tone_annoyed:Tone        {value: "annoyed_tone"})
+MERGE (stmt_a)-[:HAS_LITERAL_MEANING]->(lm_praise)
+MERGE (stmt_a)-[:HAS_TONE]->(tone_annoyed);
+
+// Henry's expression
+MATCH (henry:Person      {name: "Henry"}),
+      (expr_eye_roll:Expression {value: "eye_roll"})
+MERGE (henry)-[:HAS_EXPRESSION]->(expr_eye_roll);
+
+// Situation A node
+MERGE (sit_a:Situation {situationId: "situation_a",
+                         name: "after_mistake_sarcasm"});
+
+// Situation A edges to base vocabulary nodes
+MATCH (sit_a:Situation   {situationId: "situation_a"}),
+      (henry:Person       {name: "Henry"}),
+      (stmt_a:Statement   {statementId: "stmt_great_job_a"}),
+      (tone_annoyed:Tone  {value: "annoyed_tone"}),
+      (expr_eye_roll:Expression {value: "eye_roll"}),
+      (ctx_mistake:Context      {value: "mistake_happened"})
+MERGE (sit_a)-[:HAS_SPEAKER]->(henry)
+MERGE (sit_a)-[:HAS_STATEMENT]->(stmt_a)
+MERGE (sit_a)-[:HAS_TONE]->(tone_annoyed)
+MERGE (sit_a)-[:HAS_EXPRESSION]->(expr_eye_roll)
+MERGE (sit_a)-[:HAS_CONTEXT]->(ctx_mistake);
+
+// Situation A → HAS_SIGNAL → derived signal nodes
+MATCH (sit_a:Situation        {situationId: "situation_a"}),
+      (sig_lm_praise:Signal    {signalId: "sig_lm_praise"}),
+      (sig_expr_eye_roll:Signal {signalId: "sig_expr_eye_roll"}),
+      (sig_tone_annoyed:Signal  {signalId: "sig_tone_annoyed"}),
+      (sig_ctx_mistake:Signal   {signalId: "sig_ctx_mistake"})
+MERGE (sit_a)-[:HAS_SIGNAL]->(sig_lm_praise)
+MERGE (sit_a)-[:HAS_SIGNAL]->(sig_expr_eye_roll)
+MERGE (sit_a)-[:HAS_SIGNAL]->(sig_tone_annoyed)
+MERGE (sit_a)-[:HAS_SIGNAL]->(sig_ctx_mistake);
+
+// ------------------------------------------------------------
+// 7. Situation B — Genuine Encouragement scenario
+// ------------------------------------------------------------
+
+// Statement instance for Situation B
+MERGE (stmt_b:Statement {statementId: "stmt_great_job_b", text: "Great job"});
+
+// Alice said the statement
+MATCH (alice:Person {name: "Alice"}),
+      (stmt_b:Statement {statementId: "stmt_great_job_b"})
+MERGE (alice)-[:SAID]->(stmt_b);
+
+// Statement links to literal meaning and tone
+MATCH (stmt_b:Statement      {statementId: "stmt_great_job_b"}),
+      (lm_praise:LiteralMeaning {value: "praise"}),
+      (tone_warm:Tone            {value: "warm_tone"})
+MERGE (stmt_b)-[:HAS_LITERAL_MEANING]->(lm_praise)
+MERGE (stmt_b)-[:HAS_TONE]->(tone_warm);
+
+// Alice's expression
+MATCH (alice:Person       {name: "Alice"}),
+      (expr_smile:Expression {value: "smile"})
+MERGE (alice)-[:HAS_EXPRESSION]->(expr_smile);
+
+// Situation B node
+MERGE (sit_b:Situation {situationId: "situation_b",
+                         name: "after_mistake_encouragement"});
+
+// Situation B edges to base vocabulary nodes
+MATCH (sit_b:Situation  {situationId: "situation_b"}),
+      (alice:Person       {name: "Alice"}),
+      (stmt_b:Statement   {statementId: "stmt_great_job_b"}),
+      (tone_warm:Tone     {value: "warm_tone"}),
+      (expr_smile:Expression {value: "smile"}),
+      (ctx_mistake:Context   {value: "mistake_happened"})
+MERGE (sit_b)-[:HAS_SPEAKER]->(alice)
+MERGE (sit_b)-[:HAS_STATEMENT]->(stmt_b)
+MERGE (sit_b)-[:HAS_TONE]->(tone_warm)
+MERGE (sit_b)-[:HAS_EXPRESSION]->(expr_smile)
+MERGE (sit_b)-[:HAS_CONTEXT]->(ctx_mistake);
+
+// Situation B → HAS_SIGNAL → derived signal nodes
+MATCH (sit_b:Situation       {situationId: "situation_b"}),
+      (sig_lm_praise:Signal   {signalId: "sig_lm_praise"}),
+      (sig_expr_smile:Signal  {signalId: "sig_expr_smile"}),
+      (sig_tone_warm:Signal   {signalId: "sig_tone_warm"}),
+      (sig_ctx_mistake:Signal {signalId: "sig_ctx_mistake"})
+MERGE (sit_b)-[:HAS_SIGNAL]->(sig_lm_praise)
+MERGE (sit_b)-[:HAS_SIGNAL]->(sig_expr_smile)
+MERGE (sit_b)-[:HAS_SIGNAL]->(sig_tone_warm)
+MERGE (sit_b)-[:HAS_SIGNAL]->(sig_ctx_mistake);
+
+// ============================================================
+// VALIDATION QUERIES (commented out — run individually)
+// ============================================================
+
+// -- V1: Count all node labels
+// MATCH (n)
+// RETURN labels(n) AS label, count(n) AS total
+// ORDER BY label;
+
+// -- V2: Verify both Situation nodes exist with correct names
+// MATCH (s:Situation)
+// RETURN s.situationId, s.name
+// ORDER BY s.situationId;
+
+// -- V3: Verify each Situation has exactly 4 HAS_SIGNAL edges
+// MATCH (s:Situation)-[:HAS_SIGNAL]->(sig:Signal)
+// RETURN s.situationId, count(sig) AS signalCount;
+
+// -- V4: Verify Pattern REQUIRES counts (each pattern needs 4 signals)
+// MATCH (p:Pattern)-[:REQUIRES]->(sig:Signal)
+// RETURN p.patternId, count(sig) AS requiredSignals;
+
+// -- V5: Verify PREDICTS probability values
+// MATCH (p:Pattern)-[r:PREDICTS]->(im:IntendedMeaning)
+// RETURN p.patternId, im.value AS intendedMeaning, r.probability AS probability;
+
+// -- V6: Pattern matching — fire patterns for Situation A
+// MATCH (sit:Situation {situationId: "situation_a"})
+// MATCH (p:Pattern)-[:REQUIRES]->(req:Signal)
+// WITH sit, p, collect(req.signalId) AS requiredIds
+// MATCH (sit)-[:HAS_SIGNAL]->(hasSig:Signal)
+// WITH sit, p, requiredIds, collect(hasSig.signalId) AS situationIds
+// WHERE all(r IN requiredIds WHERE r IN situationIds)
+// MATCH (p)-[pred:PREDICTS]->(im:IntendedMeaning)
+// RETURN sit.situationId, p.patternId, im.value AS intendedMeaning, pred.probability;
+
+// -- V7: Pattern matching — fire patterns for Situation B
+// MATCH (sit:Situation {situationId: "situation_b"})
+// MATCH (p:Pattern)-[:REQUIRES]->(req:Signal)
+// WITH sit, p, collect(req.signalId) AS requiredIds
+// MATCH (sit)-[:HAS_SIGNAL]->(hasSig:Signal)
+// WITH sit, p, requiredIds, collect(hasSig.signalId) AS situationIds
+// WHERE all(r IN requiredIds WHERE r IN situationIds)
+// MATCH (p)-[pred:PREDICTS]->(im:IntendedMeaning)
+// RETURN sit.situationId, p.patternId, im.value AS intendedMeaning, pred.probability;
+
+// -- V8: Confirm LiteralMeaning singleton is shared across both statements
+// MATCH (st:Statement)-[:HAS_LITERAL_MEANING]->(lm:LiteralMeaning {value: "praise"})
+// RETURN st.statementId, st.text, lm.value AS literalMeaning;
+
+// -- V9: Confirm Context GENERATES_SIGNAL bridge
+// MATCH (ctx:Context)-[:GENERATES_SIGNAL]->(sig:Signal)
+// RETURN ctx.value, sig.signalId, sig.kind, sig.valueId;
+
+// -- V10: Full situation summary — speaker, statement, tone, expression, context
+// MATCH (sit:Situation)-[:HAS_SPEAKER]->(p:Person),
+//       (sit)-[:HAS_STATEMENT]->(st:Statement),
+//       (sit)-[:HAS_TONE]->(t:Tone),
+//       (sit)-[:HAS_EXPRESSION]->(e:Expression),
+//       (sit)-[:HAS_CONTEXT]->(ctx:Context)
+// RETURN sit.situationId, p.name AS speaker, st.text AS statement,
+//        t.value AS tone, e.value AS expression, ctx.value AS context
+// ORDER BY sit.situationId;
+

@@ -1,0 +1,21 @@
+- PRD_simple_autist_graph.md
+
+This file  has the graph design
+
+- generate_neo4j_cypher_from_markdown.py
+
+This python script:
+reads the graph design
+genertaes a cypher file that implements the graph for neo4j design
+
+Outputs:
+    [timestamp]]_neo4j_implementation.cypher
+    [timestamp]_NEO4J_SCHEMA.md
+
+
+create .cypher file
+
+load the .cypher file to neo4j instance
+
+run command:
+& .\.venv\Scripts\python.exe .\generate_neo4j_cypher_from_markdown.py --input .\PRD_simple_autist_graph.md
