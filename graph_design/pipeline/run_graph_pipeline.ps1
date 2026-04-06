@@ -1,5 +1,5 @@
 # Run from project root:
-# .\graph\pipeline\run_graph_pipeline.ps1 -InputMarkdown ".\graph\spec\graph_specification.md" -Neo4jPassword "YOUR_PASSWORD"
+# .\graph_design\pipeline\run_graph_pipeline.ps1 -InputMarkdown ".\graph_design\spec\graph_specification.md" -Neo4jPassword "YOUR_PASSWORD"
 
 param(
     [string]$InputMarkdown = "",
@@ -17,6 +17,27 @@ $ErrorActionPreference = "Stop"
 function Resolve-PathSafe {
     param([string]$PathValue)
     return [System.IO.Path]::GetFullPath((Join-Path (Get-Location) $PathValue))
+}
+
+function Resolve-InputMarkdownPath {
+    param([string]$PathValue)
+
+    $candidate = Resolve-PathSafe $PathValue
+    if (Test-Path -LiteralPath $candidate) {
+        return $candidate
+    }
+
+    # Backward compatibility for the older ".\graph\..." layout.
+    if ($PathValue -match '(^|[\\/])graph([\\/].*)$') {
+        $remappedPath = $PathValue -replace '(^|[\\/])graph([\\/])', '$1graph_design$2'
+        $remappedCandidate = Resolve-PathSafe $remappedPath
+        if (Test-Path -LiteralPath $remappedCandidate) {
+            Write-Host "Input markdown path not found; using migrated path: $remappedCandidate"
+            return $remappedCandidate
+        }
+    }
+
+    return $candidate
 }
 
 function Resolve-ProjectPath {
@@ -69,13 +90,21 @@ $dotenv = Read-DotEnv $envFilePath
 
 # Parameter value > environment variable > .env value > hardcoded default
 if ([string]::IsNullOrWhiteSpace($InputMarkdown)) {
-    $InputMarkdown = if ($env:INPUT_MARKDOWN) { $env:INPUT_MARKDOWN } elseif ($dotenv.ContainsKey("INPUT_MARKDOWN")) { $dotenv["INPUT_MARKDOWN"] } else { ".\graph\spec\graph_specification.md" }
+    $InputMarkdown = if ($env:INPUT_MARKDOWN) { $env:INPUT_MARKDOWN } elseif ($dotenv.ContainsKey("INPUT_MARKDOWN")) { $dotenv["INPUT_MARKDOWN"] } else { ".\graph_design\spec\graph_specification.md" }
 }
 if ([string]::IsNullOrWhiteSpace($OutputDir)) {
-    $OutputDir = if ($env:OUTPUT_DIR) { $env:OUTPUT_DIR } elseif ($dotenv.ContainsKey("OUTPUT_DIR")) { $dotenv["OUTPUT_DIR"] } else { ".\graph\cypher" }
+    $OutputDir = if ($env:OUTPUT_DIR) { $env:OUTPUT_DIR } elseif ($dotenv.ContainsKey("OUTPUT_DIR")) { $dotenv["OUTPUT_DIR"] } else { ".\graph_design\cypher" }
 }
 if ([string]::IsNullOrWhiteSpace($PythonCommand)) {
-    $PythonCommand = if ($env:PYTHON_COMMAND) { $env:PYTHON_COMMAND } elseif ($dotenv.ContainsKey("PYTHON_COMMAND")) { $dotenv["PYTHON_COMMAND"] } else { "python" }
+    $PythonCommand = if ($env:PYTHON_COMMAND) { $env:PYTHON_COMMAND } elseif ($dotenv.ContainsKey("PYTHON_COMMAND")) { $dotenv["PYTHON_COMMAND"] } else {
+        # Auto-detect: prefer the project .venv over the system python.
+        # Check relative to CWD (expected: project root) and relative to PSScriptRoot.
+        $venvFromCwd = Join-Path (Get-Location) ".venv\Scripts\python.exe"
+        $venvFromScript = Resolve-ProjectPath "..\..\.venv\Scripts\python.exe"
+        if (Test-Path -LiteralPath $venvFromCwd) { $venvFromCwd }
+        elseif (Test-Path -LiteralPath $venvFromScript) { $venvFromScript }
+        else { "python" }
+    }
 }
 if ([string]::IsNullOrWhiteSpace($CypherShellPath)) {
     $CypherShellPath = if ($env:CYPHER_SHELL_PATH) { $env:CYPHER_SHELL_PATH } elseif ($dotenv.ContainsKey("CYPHER_SHELL_PATH")) { $dotenv["CYPHER_SHELL_PATH"] } else { "cypher-shell" }
@@ -93,7 +122,7 @@ if ([string]::IsNullOrWhiteSpace($Neo4jDatabase)) {
     $Neo4jDatabase = if ($env:NEO4J_DATABASE) { $env:NEO4J_DATABASE } elseif ($dotenv.ContainsKey("NEO4J_DATABASE")) { $dotenv["NEO4J_DATABASE"] } else { "neo4j" }
 }
 
-$inputPath = Resolve-PathSafe $InputMarkdown
+$inputPath = Resolve-InputMarkdownPath $InputMarkdown
 $outputPath = Resolve-PathSafe $OutputDir
 $generatorScript = Resolve-ProjectPath ".\generate_neo4j_cypher_from_markdown.py"
 $exportScript = Resolve-ProjectPath ".\export_graph_to_cytoscape.py"

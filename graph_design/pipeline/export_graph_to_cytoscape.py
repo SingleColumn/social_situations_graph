@@ -137,7 +137,7 @@ def _best_node_key(node) -> str:
 
     # Schema-specific identity keys first
     label_id_fields = {
-        "Statement": ["instanceId"],
+        "Statement": ["statementId", "instanceId"],
         "Situation": ["situationId"],
         "Person": ["name"],
         "Tone": ["value"],
@@ -146,7 +146,8 @@ def _best_node_key(node) -> str:
         "LiteralMeaning": ["value"],
         "IntendedMeaning": ["value"],
         "Pattern": ["patternId"],
-        "Signal": ["signalId"],
+        "SignalType": ["signalTypeId", "kind", "valueId"],
+        "SituationSignal": ["situationSignalId"],
     }
 
     for field in label_id_fields.get(label, []):

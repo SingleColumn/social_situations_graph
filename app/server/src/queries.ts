@@ -12,12 +12,12 @@ export const queryTemplates: QueryTemplate[] = [
 MATCH (ctx:Context)
 WHERE toLower(ctx.value) CONTAINS toLower($term)
 OPTIONAL MATCH (sit:Situation)-[:HAS_CONTEXT]->(ctx)
-OPTIONAL MATCH (sit)-[:HAS_SIGNAL]->(sig:Signal)
-OPTIONAL MATCH (p:Pattern)-[:REQUIRES]->(sig)
+OPTIONAL MATCH (sit)-[:HAS_SIGNAL]->(sig:SituationSignal)-[:INSTANCE_OF]->(st:SignalType)
+OPTIONAL MATCH (p:Pattern)-[:REQUIRES]->(st)
 OPTIONAL MATCH (p)-[pred:PREDICTS]->(im:IntendedMeaning)
 RETURN sit.situationId AS situationId,
        sit.description AS situationDescription,
-       collect(DISTINCT sig.signalId) AS matchedSignals,
+       collect(DISTINCT st.valueId) AS matchedSignals,
        collect(DISTINCT p.patternId) AS matchedPatterns,
        collect(DISTINCT {meaning: im.value, probability: pred.probability}) AS predictions
 LIMIT 5
@@ -30,13 +30,13 @@ LIMIT 5
 MATCH (stmt:Statement)
 WHERE toLower(stmt.text) CONTAINS toLower($term)
 MATCH (sit:Situation)-[:HAS_STATEMENT]->(stmt)
-OPTIONAL MATCH (sit)-[:HAS_SIGNAL]->(sig:Signal)
-OPTIONAL MATCH (p:Pattern)-[:REQUIRES]->(sig)
+OPTIONAL MATCH (sit)-[:HAS_SIGNAL]->(sig:SituationSignal)-[:INSTANCE_OF]->(st:SignalType)
+OPTIONAL MATCH (p:Pattern)-[:REQUIRES]->(st)
 OPTIONAL MATCH (p)-[pred:PREDICTS]->(im:IntendedMeaning)
 RETURN sit.situationId AS situationId,
        sit.description AS situationDescription,
        stmt.text AS matchedStatement,
-       collect(DISTINCT sig.signalId) AS matchedSignals,
+       collect(DISTINCT st.valueId) AS matchedSignals,
        collect(DISTINCT p.patternId) AS matchedPatterns,
        collect(DISTINCT {meaning: im.value, probability: pred.probability}) AS predictions
 LIMIT 5
@@ -46,12 +46,12 @@ LIMIT 5
     id: "fallback_signal_pattern",
     description: "Fallback broad retrieval for likely related patterns",
     cypher: `
-MATCH (sit:Situation)-[:HAS_SIGNAL]->(sig:Signal)
-OPTIONAL MATCH (p:Pattern)-[:REQUIRES]->(sig)
+MATCH (sit:Situation)-[:HAS_SIGNAL]->(sig:SituationSignal)-[:INSTANCE_OF]->(st:SignalType)
+OPTIONAL MATCH (p:Pattern)-[:REQUIRES]->(st)
 OPTIONAL MATCH (p)-[pred:PREDICTS]->(im:IntendedMeaning)
 RETURN sit.situationId AS situationId,
        sit.description AS situationDescription,
-       collect(DISTINCT sig.signalId) AS matchedSignals,
+       collect(DISTINCT st.valueId) AS matchedSignals,
        collect(DISTINCT p.patternId) AS matchedPatterns,
        collect(DISTINCT {meaning: im.value, probability: pred.probability}) AS predictions
 LIMIT 10

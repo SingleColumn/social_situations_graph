@@ -124,13 +124,28 @@ def main() -> None:
                     session.run(stmt).consume()
                     print(f"[{idx}/{len(statements)}] OK: {stmt_preview}...")
                 except Exception as e:  # noqa: BLE001 - we want the raw driver error
-                    # If the target database doesn't exist, we need to retry the
-                    # entire run against the default database (handled in the caller).
-                    lowered = str(e).lower()
+                    err_str = str(e)
+                    lowered = err_str.lower()
+
+                    # Let the caller handle database-not-found by retrying on the
+                    # default database.
                     if ("databasenotfound" in lowered) or ("graph reference not found" in lowered):
                         raise
 
-                    msg = f"[{idx}/{len(statements)}] FAILED: {stmt_preview}...\n{safe_for_console(str(e))}"
+                    # Schema-already-exists errors are idempotent: the desired
+                    # constraint or index is already present, so treat as a warning.
+                    _schema_already_exists = (
+                        "ConstraintAlreadyExists" in err_str
+                        or "IndexAlreadyExists" in err_str
+                        or "EquivalentSchemaRuleAlreadyExists" in err_str
+                        or "conflicting constraint already exists" in lowered
+                        or "equivalent index already exists" in lowered
+                    )
+                    if _schema_already_exists:
+                        print(f"[{idx}/{len(statements)}] SKIP (already exists): {stmt_preview}...")
+                        continue
+
+                    msg = f"[{idx}/{len(statements)}] FAILED: {stmt_preview}...\n{safe_for_console(err_str)}"
                     if args.continue_on_error:
                         print(msg)
                         continue

@@ -37,10 +37,15 @@ function computeNodeDisplayLabel(data) {
   if (nodeType === "LiteralMeaning") return `Literal meaning: ${data.value || fallbackLabel(data)}`;
   if (nodeType === "IntendedMeaning") return `Intended meaning: ${data.value || fallbackLabel(data)}`;
   if (nodeType === "Pattern") return `Pattern: ${data.patternId || fallbackLabel(data)}`;
-  if (nodeType === "Signal") {
+  if (nodeType === "SituationSignal") {
     const kind = data.kind || "signal";
     const valueId = data.valueId || fallbackLabel(data);
     return `Signal: ${kind} / ${valueId}`;
+  }
+  if (nodeType === "SignalType") {
+    const kind = data.kind || "type";
+    const valueId = data.valueId || fallbackLabel(data);
+    return `SignalType: ${kind} / ${valueId}`;
   }
   if (nodeType === "Situation") {
     return humanizeSituationLabel(data);
@@ -62,7 +67,7 @@ function enrichElements(elements) {
 }
 
 function buildTypeLayeredPositions(elements) {
-  const typeOrder = ["Situation", "Person", "Statement", "LiteralMeaning", "Tone", "Expression", "Context", "Signal", "Pattern", "IntendedMeaning"];
+  const typeOrder = ["Situation", "Person", "Statement", "LiteralMeaning", "Tone", "Expression", "Context", "SituationSignal", "SignalType", "Pattern", "IntendedMeaning"];
   const typeToRow = Object.fromEntries(typeOrder.map((t, i) => [t, i]));
   const grouped = new Map();
   for (const el of elements) {
@@ -96,7 +101,7 @@ function buildTypeLayeredPositions(elements) {
 
 function classifyChannel(edgeType) {
   const literalTypes = new Set(["SAID", "HAS_EXPRESSION", "HAS_TONE", "HAS_LITERAL_MEANING", "HAS_CONTEXT", "HAS_SPEAKER", "HAS_STATEMENT"]);
-  const inferenceTypes = new Set(["HAS_SIGNAL", "SUGGESTS", "DERIVED_AS", "REQUIRES", "PREDICTS"]);
+  const inferenceTypes = new Set(["HAS_SIGNAL", "INSTANCE_OF", "SUGGESTS", "DERIVED_AS", "REQUIRES", "PREDICTS"]);
   if (literalTypes.has(edgeType)) return "literal";
   if (inferenceTypes.has(edgeType)) return "inference";
   return "other";
@@ -190,7 +195,8 @@ fetch(`/api/graph/full?v=${Date.now()}`, { cache: "no-store" })
         { selector: 'node[label = "Expression"]', style: { "background-color": "#06b6d4", shape: "diamond" } },
         { selector: 'node[label = "Context"]', style: { "background-color": "#a855f7", shape: "round-rectangle" } },
         { selector: 'node[label = "Situation"]', style: { "background-color": "#64748b", shape: "round-rectangle", width: 90, height: 62 } },
-        { selector: 'node[label = "Signal"]', style: { "background-color": "#eab308", shape: "round-diamond" } },
+        { selector: 'node[label = "SituationSignal"]', style: { "background-color": "#eab308", shape: "round-diamond" } },
+        { selector: 'node[label = "SignalType"]', style: { "background-color": "#d97706", shape: "diamond", width: 64, height: 64 } },
         { selector: "edge", style: { width: 3, "line-color": "#9ca3af", "target-arrow-color": "#9ca3af", "target-arrow-shape": "triangle", "curve-style": "unbundled-bezier", "control-point-step-size": 35, label: "", "font-size": 13, "text-background-color": "#020617", "text-background-opacity": 0.95, "text-background-padding": 4, "text-rotation": "autorotate", color: "#e5e7eb" } },
         { selector: "edge.show-label", style: { label: "data(displayType)" } },
         { selector: "edge.channel-literal", style: { "line-color": "#60a5fa", "target-arrow-color": "#60a5fa" } },
@@ -242,7 +248,15 @@ fetch(`/api/graph/full?v=${Date.now()}`, { cache: "no-store" })
 
       // Phase 2: include only Patterns whose every REQUIRES target is among
       // this situation's own signals (fully activated patterns).
-      const situationSignalIds = new Set(owned.nodes('[label = "Signal"]').map((n) => n.id()));
+      // The REQUIRES edges point to SignalType nodes, so we need the set of
+      // SignalType IDs reachable via INSTANCE_OF from this situation's SituationSignals.
+      const situationSignalTypeIds = new Set(
+        owned.nodes('[label = "SituationSignal"]')
+          .connectedEdges()
+          .filter((e) => e.data("type") === "INSTANCE_OF")
+          .targets()
+          .map((n) => n.id())
+      );
       let subgraph = owned;
 
       cy.nodes('[label = "Pattern"]').forEach((pattern) => {
@@ -251,7 +265,7 @@ fetch(`/api/graph/full?v=${Date.now()}`, { cache: "no-store" })
           .filter((e) => e.source().same(pattern) && e.data("type") === "REQUIRES")
           .targets();
         const fullyActivated = requiredSignals.length > 0 &&
-          requiredSignals.every((sig) => situationSignalIds.has(sig.id()));
+          requiredSignals.every((sig) => situationSignalTypeIds.has(sig.id()));
 
         if (fullyActivated) {
           subgraph = subgraph.union(pattern);
@@ -278,6 +292,7 @@ fetch(`/api/graph/full?v=${Date.now()}`, { cache: "no-store" })
         cy.nodes('[label = "Pattern"]').removeClass("pattern-activated");
         scope = cy.elements();
       }
+      const showVocabulary = document.getElementById("toggleVocabulary").checked;
       cy.batch(() => {
         cy.elements().not(scope).style("display", "none");
         scope.style("display", "element");
@@ -290,6 +305,11 @@ fetch(`/api/graph/full?v=${Date.now()}`, { cache: "no-store" })
           const showNode = (showLiteral && isLiteralNode) || (showInference && isInferenceNode) || (!isLiteralNode && !isInferenceNode);
           if (!showNode) node.style("display", "none");
         });
+        if (!showVocabulary) {
+          scope.nodes('[label = "SignalType"]').style("display", "none");
+          scope.edges('[type = "INSTANCE_OF"]').style("display", "none");
+          scope.edges('[type = "REQUIRES"]').style("display", "none");
+        }
       });
       const visible = cy.elements(":visible");
       if (visible.nonempty()) cy.fit(visible, 120);
@@ -300,6 +320,15 @@ fetch(`/api/graph/full?v=${Date.now()}`, { cache: "no-store" })
       cy.batch(() => {
         if (showEdgeLabels) cy.edges().addClass("show-label");
         else cy.edges().removeClass("show-label");
+      });
+    }
+
+    function applyVocabularyVisibility() {
+      const show = document.getElementById("toggleVocabulary").checked;
+      cy.batch(() => {
+        cy.nodes('[label = "SignalType"]').style("display", show ? "element" : "none");
+        cy.edges('[type = "INSTANCE_OF"]').style("display", show ? "element" : "none");
+        cy.edges('[type = "REQUIRES"]').style("display", show ? "element" : "none");
       });
     }
 
@@ -318,11 +347,16 @@ fetch(`/api/graph/full?v=${Date.now()}`, { cache: "no-store" })
     document.getElementById("toggleLiteral").addEventListener("change", applyFilters);
     document.getElementById("toggleInference").addEventListener("change", applyFilters);
     document.getElementById("toggleEdgeLabels").addEventListener("change", applyEdgeLabelVisibility);
+    document.getElementById("toggleVocabulary").addEventListener("change", () => {
+      applyVocabularyVisibility();
+      applyFilters();
+    });
     document.getElementById("toggleInterpret").addEventListener("change", (e) => {
       document.getElementById("interpret-panel").classList.toggle("hidden", !e.target.checked);
     });
     applyFilters();
     applyEdgeLabelVisibility();
+    applyVocabularyVisibility();
     cy.zoom(0.9);
     cy.center();
   })

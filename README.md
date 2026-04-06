@@ -1,51 +1,102 @@
 # Social Situations Graph Demo
 
-Local TypeScript demo showing how an LLM can help query an existing Neo4j social interpretation graph.
+A local TypeScript/Python demo that maps observable social cues — tone, expression, context, literal meaning — through a weighted pattern graph to likely social interpretations.
 
-## What this app does
+## What this does
 
-- Visualizes the whole graph in Cytoscape.
-- Accepts a natural-language social situation from the user.
-- Runs an allowlisted Cypher template against Neo4j.
-- Uses Anthropic Sonnet to summarize likely interpretations.
-- Falls back to deterministic scoring if Anthropic is unavailable.
+- Stores a graph of social situations, signal patterns, and interpretations in Neo4j.
+- Visualizes the graph interactively in the browser using Cytoscape.js.
+- Accepts a natural-language situation description, queries Neo4j for matching patterns, and uses Claude to summarize the likely intended meanings.
+
+---
 
 ## Project layout
-- `app/server/src/index.ts` - API server and static file hosting
-- `app/server/src/neo4j.ts` - Neo4j driver/session helpers
-- `app/server/src/queries.ts` - allowlisted Cypher templates
-- `app/server/src/interpret.ts` - interpretation orchestration
-- `app/server/src/anthropic.ts` - Sonnet client + response parsing
-- `app/web/index.html` - UI shell (graph + textbox + results)
-- `app/web/app.js` - frontend behavior and Cytoscape wiring
-- `app/web/tokens.css`, `app/web/styles.css` - token-driven styling
+
+```
+graph_design/
+  spec/
+    graph_specification.md          ← graph design: node types, relationships, patterns, sample data
+  pipeline/
+    run_graph_pipeline.ps1          ← end-to-end pipeline (run this to rebuild the graph)
+    generate_neo4j_cypher_from_markdown.py  ← calls Claude to generate Cypher from the spec
+    load_cypher_into_neo4j.py       ← loads a Cypher file into Neo4j
+    export_graph_to_cytoscape.py    ← exports Neo4j graph to Cytoscape JSON
+  cypher/                           ← timestamped generated Cypher and schema docs
+  exports/                          ← Cytoscape JSON snapshot (written by pipeline)
+
+app/
+  server/src/
+    index.ts                        ← Express API server and static file hosting
+    neo4j.ts                        ← Neo4j driver/session helpers
+    queries.ts                      ← allowlisted Cypher query templates
+    interpret.ts                    ← interpretation orchestration
+    anthropic.ts                    ← Claude client and response parsing
+  web/
+    index.html                      ← UI shell
+    app.js                          ← Cytoscape wiring and frontend logic
+    tokens.css, styles.css          ← styling
+```
+
+---
 
 ## Environment variables
 
-Set these in `.env`:
+Create a `.env` file at the project root:
 
-- `NEO4J_URI`
-- `NEO4J_USER`
-- `NEO4J_PASSWORD`
-- `NEO4J_DATABASE`
-- `ANTHROPIC_API_KEY` (optional but recommended)
+```env
+ANTHROPIC_API_KEY=your_anthropic_key
+NEO4J_URI=neo4j://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=your_neo4j_password
+NEO4J_DATABASE=neo4j
+```
 
-## Run locally
+---
 
-1. Install dependencies:
-   - `npm install`
-2. Start the app:
-   - `npm run dev`
-3. Open:
-   - `http://localhost:3000`
+## Step 1 — Run the graph pipeline
+
+The pipeline reads the graph specification, calls Claude to generate Cypher, resets and reloads Neo4j, then exports a Cytoscape JSON snapshot.
+
+```powershell
+.\graph_design\pipeline\run_graph_pipeline.ps1
+```
+
+**Graph specification:** `graph_design/spec/graph_specification.md`
+
+The pipeline requires Neo4j to be running. It will auto-detect the project `.venv` Python environment if present.
+
+To regenerate Cypher only (without loading into Neo4j):
+
+```powershell
+.venv\Scripts\python.exe graph_design\pipeline\generate_neo4j_cypher_from_markdown.py
+```
+
+---
+
+## Step 2 — Run the app
+
+```bash
+npm install
+npm run dev
+```
+
+Open `http://localhost:3000`.
+
+---
 
 ## API endpoints
 
-- `GET /api/graph/full` -> returns Cytoscape-compatible graph elements from Neo4j
-- `POST /api/interpret` -> accepts `{ "situation": "..." }` and returns ranked interpretations
-- `GET /api/health` -> simple health check
+| Endpoint | Description |
+|---|---|
+| `GET /api/graph/full` | All nodes and relationships from Neo4j as Cytoscape elements |
+| `POST /api/interpret` | Accepts `{ "situation": "..." }`, returns ranked interpretations |
+| `GET /api/health` | Health check |
+
+---
 
 ## Notes
 
-- Neo4j is the source of truth; the old JSON export is no longer required for runtime graph loading.
-- For demo safety and predictability, only predefined Cypher templates are executed.
+- Neo4j is the source of truth; the app reads directly from the database at runtime.
+- The pipeline resets the database on each run (`MATCH (n) DETACH DELETE n`) before loading new data.
+- Only predefined Cypher templates are executed at runtime (no user-supplied queries).
+- Generated Cypher files are timestamped and kept in `graph_design/cypher/` for reference.
