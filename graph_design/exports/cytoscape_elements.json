@@ -8,14 +8,14 @@
         "patternId": "pattern_sarcasm",
         "match_mode": "all_required",
         "name": "Sarcasm Pattern",
-        "description": "Praise given with a dry tone and eye roll in a painting context suggests sarcasm",
+        "description": "Praise given with an eye roll and dry tone in a painting context suggests sarcasm",
         "min_coverage": 1.0
       }
     },
     {
       "data": {
         "id": "SignalType:st_tone_dry",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:8",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:30",
         "label": "SignalType",
         "valueId": "dry_tone",
         "kind": "tone",
@@ -26,18 +26,18 @@
     {
       "data": {
         "id": "SignalType:st_expr_eye_roll",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:10",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:32",
         "label": "SignalType",
         "valueId": "eye_roll",
         "kind": "expression",
-        "name": "Eye Roll",
+        "name": "Eye Roll Expression",
         "signalTypeId": "st_expr_eye_roll"
       }
     },
     {
       "data": {
         "id": "SignalType:st_ctx_painting",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:12",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:34",
         "label": "SignalType",
         "valueId": "They are looking at my painting",
         "kind": "context",
@@ -48,7 +48,7 @@
     {
       "data": {
         "id": "SignalType:st_lm_praise",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:13",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:35",
         "label": "SignalType",
         "valueId": "praise",
         "kind": "literal_meaning",
@@ -59,10 +59,10 @@
     {
       "data": {
         "id": "IntendedMeaning:sarcasm",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:16",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:37",
         "label": "IntendedMeaning",
         "name": "Sarcasm",
-        "description": "The speaker intends the opposite of the literal meaning, implying criticism",
+        "description": "The speaker intends the opposite of the literal meaning, often mockingly",
         "value": "sarcasm"
       }
     },
@@ -74,14 +74,14 @@
         "patternId": "pattern_genuine_praise",
         "match_mode": "all_required",
         "name": "Genuine Praise Pattern",
-        "description": "Praise given with an enthusiastic tone and awe expression in a painting context suggests genuine admiration",
+        "description": "Praise given with awe and enthusiastic tone in a painting context suggests genuine praise",
         "min_coverage": 1.0
       }
     },
     {
       "data": {
         "id": "SignalType:st_tone_enthusiastic",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:9",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:31",
         "label": "SignalType",
         "valueId": "enthusiastic_tone",
         "kind": "tone",
@@ -92,28 +92,58 @@
     {
       "data": {
         "id": "SignalType:st_expr_awe",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:11",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:33",
         "label": "SignalType",
         "valueId": "awe",
         "kind": "expression",
-        "name": "Awe",
+        "name": "Awe Expression",
         "signalTypeId": "st_expr_awe"
       }
     },
     {
       "data": {
         "id": "IntendedMeaning:praise",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:19",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:40",
         "label": "IntendedMeaning",
-        "name": "Genuine Praise",
-        "description": "The speaker is sincerely and enthusiastically praising the subject",
+        "name": "Praise",
+        "description": "The speaker genuinely and enthusiastically praises the subject",
         "value": "praise"
       }
     },
     {
       "data": {
-        "id": "Person:Alice",
+        "id": "Situation:painting_feedback_sarcasm",
         "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:2",
+        "label": "Situation",
+        "name": "Painting Feedback — Sarcasm",
+        "situationId": "painting_feedback_sarcasm",
+        "description": "Alice looks at my painting and says Congratulations, it's definitely original in a dry tone with an eye-roll expression."
+      }
+    },
+    {
+      "data": {
+        "id": "Expression:eye_roll",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:44",
+        "label": "Expression",
+        "name": "Eye Roll",
+        "description": "A facial gesture indicating contempt, sarcasm, or dismissal",
+        "value": "eye_roll"
+      }
+    },
+    {
+      "data": {
+        "id": "Tone:dry_tone",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:42",
+        "label": "Tone",
+        "name": "Dry Tone",
+        "description": "A flat, unenthusiastic delivery suggesting detachment or irony",
+        "value": "dry_tone"
+      }
+    },
+    {
+      "data": {
+        "id": "Person:Alice",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:3",
         "label": "Person",
         "name": "Alice",
         "description": "Speaker in the sarcasm situation"
@@ -122,60 +152,19 @@
     {
       "data": {
         "id": "Statement:stmt_congrats",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:3",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:4",
         "label": "Statement",
-        "name": "Dry Congratulations",
         "statementId": "stmt_congrats",
         "text": "Congratulations, it's definitely original"
       }
     },
     {
       "data": {
-        "id": "Expression:eye_roll",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:46",
-        "label": "Expression",
-        "name": "Eye Roll",
-        "description": "A facial gesture signalling contempt, disbelief, or sarcasm",
-        "value": "eye_roll"
-      }
-    },
-    {
-      "data": {
-        "id": "LiteralMeaning:praise",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:14",
-        "label": "LiteralMeaning",
-        "name": "Praise",
-        "description": "Surface-level complimentary meaning of the utterance",
-        "value": "praise"
-      }
-    },
-    {
-      "data": {
-        "id": "Tone:dry_tone",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:20",
-        "label": "Tone",
-        "name": "Dry Tone",
-        "description": "A flat, deadpan delivery that signals detachment or sarcasm",
-        "value": "dry_tone"
-      }
-    },
-    {
-      "data": {
-        "id": "Situation:painting_feedback_sarcasm",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:4",
-        "label": "Situation",
-        "name": "Painting Feedback — Sarcasm",
-        "situationId": "painting_feedback_sarcasm",
-        "description": "Alice looks at my painting and says 'Congratulations, it's definitely original' in a dry tone with an eye-roll expression."
-      }
-    },
-    {
-      "data": {
         "id": "Context:They are looking at my painting",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:15",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:41",
         "label": "Context",
         "name": "Painting Viewing Context",
-        "description": "The observer is looking at the speaker's painting",
+        "description": "The observer is directly viewing the painting being discussed",
         "value": "They are looking at my painting"
       }
     },
@@ -218,7 +207,7 @@
     {
       "data": {
         "id": "SituationSignal:sig_a_context",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:21",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:8",
         "label": "SituationSignal",
         "valueId": "They are looking at my painting",
         "kind": "context",
@@ -229,27 +218,28 @@
     },
     {
       "data": {
-        "id": "Person:Henry",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:23",
-        "label": "Person",
-        "name": "Henry",
-        "description": "Speaker in the genuine praise situation"
+        "id": "LiteralMeaning:praise",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:36",
+        "label": "LiteralMeaning",
+        "name": "Praise",
+        "description": "Surface-level complimentary meaning of the utterance",
+        "value": "praise"
       }
     },
     {
       "data": {
-        "id": "Statement:stmt_great",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:24",
-        "label": "Statement",
-        "name": "Enthusiastic Praise",
-        "statementId": "stmt_great",
-        "text": "It's great, it's very original"
+        "id": "Situation:painting_feedback_genuine_praise",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:9",
+        "label": "Situation",
+        "name": "Painting Feedback — Genuine Praise",
+        "situationId": "painting_feedback_genuine_praise",
+        "description": "Henry looks at my painting and says It's great, it's very original in an enthusiastic tone with an expression of awe."
       }
     },
     {
       "data": {
         "id": "Expression:awe",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:47",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:45",
         "label": "Expression",
         "name": "Awe",
         "description": "A facial expression of wonder and genuine admiration",
@@ -259,27 +249,35 @@
     {
       "data": {
         "id": "Tone:enthusiastic_tone",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:22",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:43",
         "label": "Tone",
         "name": "Enthusiastic Tone",
-        "description": "An energetic, warm delivery that signals genuine positive feeling",
+        "description": "An energetic, warm delivery suggesting genuine positive feeling",
         "value": "enthusiastic_tone"
       }
     },
     {
       "data": {
-        "id": "Situation:painting_feedback_genuine_praise",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:25",
-        "label": "Situation",
-        "name": "Painting Feedback — Genuine Praise",
-        "situationId": "painting_feedback_genuine_praise",
-        "description": "Henry looks at my painting and says 'It's great, it's very original' in an enthusiastic tone with an expression of awe."
+        "id": "Person:Henry",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:10",
+        "label": "Person",
+        "name": "Henry",
+        "description": "Speaker in the genuine praise situation"
+      }
+    },
+    {
+      "data": {
+        "id": "Statement:stmt_great",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:11",
+        "label": "Statement",
+        "statementId": "stmt_great",
+        "text": "It's great, it's very original"
       }
     },
     {
       "data": {
         "id": "SituationSignal:sig_b_literal",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:26",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:12",
         "label": "SituationSignal",
         "valueId": "praise",
         "kind": "literal_meaning",
@@ -291,7 +289,7 @@
     {
       "data": {
         "id": "SituationSignal:sig_b_expression",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:27",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:13",
         "label": "SituationSignal",
         "valueId": "awe",
         "kind": "expression",
@@ -303,7 +301,7 @@
     {
       "data": {
         "id": "SituationSignal:sig_b_tone",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:28",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:14",
         "label": "SituationSignal",
         "valueId": "enthusiastic_tone",
         "kind": "tone",
@@ -315,7 +313,7 @@
     {
       "data": {
         "id": "SituationSignal:sig_b_context",
-        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:29",
+        "neo4jElementId": "4:ebfb1a82-94a8-4ec7-bbac-a0318d9def7e:15",
         "label": "SituationSignal",
         "valueId": "They are looking at my painting",
         "kind": "context",
@@ -417,54 +415,22 @@
     {
       "data": {
         "id": "e10",
-        "source": "Person:Alice",
-        "target": "Statement:stmt_congrats",
-        "type": "SAID"
+        "source": "Situation:painting_feedback_sarcasm",
+        "target": "Expression:eye_roll",
+        "type": "HAS_EXPRESSION"
       }
     },
     {
       "data": {
         "id": "e11",
-        "source": "Person:Alice",
-        "target": "Expression:eye_roll",
-        "type": "HAS_EXPRESSION"
+        "source": "Situation:painting_feedback_sarcasm",
+        "target": "Tone:dry_tone",
+        "type": "HAS_TONE"
       }
     },
     {
       "data": {
         "id": "e12",
-        "source": "Statement:stmt_congrats",
-        "target": "LiteralMeaning:praise",
-        "type": "HAS_LITERAL_MEANING"
-      }
-    },
-    {
-      "data": {
-        "id": "e13",
-        "source": "Statement:stmt_congrats",
-        "target": "Tone:dry_tone",
-        "type": "HAS_TONE"
-      }
-    },
-    {
-      "data": {
-        "id": "e14",
-        "source": "Situation:painting_feedback_sarcasm",
-        "target": "Expression:eye_roll",
-        "type": "HAS_EXPRESSION"
-      }
-    },
-    {
-      "data": {
-        "id": "e15",
-        "source": "Situation:painting_feedback_sarcasm",
-        "target": "Tone:dry_tone",
-        "type": "HAS_TONE"
-      }
-    },
-    {
-      "data": {
-        "id": "e16",
         "source": "Situation:painting_feedback_sarcasm",
         "target": "Person:Alice",
         "type": "HAS_SPEAKER"
@@ -472,7 +438,7 @@
     },
     {
       "data": {
-        "id": "e17",
+        "id": "e13",
         "source": "Situation:painting_feedback_sarcasm",
         "target": "Statement:stmt_congrats",
         "type": "HAS_STATEMENT"
@@ -480,7 +446,7 @@
     },
     {
       "data": {
-        "id": "e18",
+        "id": "e14",
         "source": "Situation:painting_feedback_sarcasm",
         "target": "Context:They are looking at my painting",
         "type": "HAS_CONTEXT"
@@ -488,7 +454,7 @@
     },
     {
       "data": {
-        "id": "e19",
+        "id": "e15",
         "source": "Situation:painting_feedback_sarcasm",
         "target": "SituationSignal:sig_a_literal",
         "type": "HAS_SIGNAL"
@@ -496,7 +462,7 @@
     },
     {
       "data": {
-        "id": "e20",
+        "id": "e16",
         "source": "Situation:painting_feedback_sarcasm",
         "target": "SituationSignal:sig_a_expression",
         "type": "HAS_SIGNAL"
@@ -504,7 +470,7 @@
     },
     {
       "data": {
-        "id": "e21",
+        "id": "e17",
         "source": "Situation:painting_feedback_sarcasm",
         "target": "SituationSignal:sig_a_tone",
         "type": "HAS_SIGNAL"
@@ -512,10 +478,42 @@
     },
     {
       "data": {
-        "id": "e22",
+        "id": "e18",
         "source": "Situation:painting_feedback_sarcasm",
         "target": "SituationSignal:sig_a_context",
         "type": "HAS_SIGNAL"
+      }
+    },
+    {
+      "data": {
+        "id": "e19",
+        "source": "Person:Alice",
+        "target": "Statement:stmt_congrats",
+        "type": "SAID"
+      }
+    },
+    {
+      "data": {
+        "id": "e20",
+        "source": "Person:Alice",
+        "target": "Expression:eye_roll",
+        "type": "HAS_EXPRESSION"
+      }
+    },
+    {
+      "data": {
+        "id": "e21",
+        "source": "Statement:stmt_congrats",
+        "target": "LiteralMeaning:praise",
+        "type": "HAS_LITERAL_MEANING"
+      }
+    },
+    {
+      "data": {
+        "id": "e22",
+        "source": "Statement:stmt_congrats",
+        "target": "Tone:dry_tone",
+        "type": "HAS_TONE"
       }
     },
     {
@@ -553,54 +551,22 @@
     {
       "data": {
         "id": "e27",
-        "source": "Person:Henry",
-        "target": "Statement:stmt_great",
-        "type": "SAID"
+        "source": "Situation:painting_feedback_genuine_praise",
+        "target": "Expression:awe",
+        "type": "HAS_EXPRESSION"
       }
     },
     {
       "data": {
         "id": "e28",
-        "source": "Person:Henry",
-        "target": "Expression:awe",
-        "type": "HAS_EXPRESSION"
+        "source": "Situation:painting_feedback_genuine_praise",
+        "target": "Tone:enthusiastic_tone",
+        "type": "HAS_TONE"
       }
     },
     {
       "data": {
         "id": "e29",
-        "source": "Statement:stmt_great",
-        "target": "LiteralMeaning:praise",
-        "type": "HAS_LITERAL_MEANING"
-      }
-    },
-    {
-      "data": {
-        "id": "e30",
-        "source": "Statement:stmt_great",
-        "target": "Tone:enthusiastic_tone",
-        "type": "HAS_TONE"
-      }
-    },
-    {
-      "data": {
-        "id": "e31",
-        "source": "Situation:painting_feedback_genuine_praise",
-        "target": "Expression:awe",
-        "type": "HAS_EXPRESSION"
-      }
-    },
-    {
-      "data": {
-        "id": "e32",
-        "source": "Situation:painting_feedback_genuine_praise",
-        "target": "Tone:enthusiastic_tone",
-        "type": "HAS_TONE"
-      }
-    },
-    {
-      "data": {
-        "id": "e33",
         "source": "Situation:painting_feedback_genuine_praise",
         "target": "Person:Henry",
         "type": "HAS_SPEAKER"
@@ -608,7 +574,7 @@
     },
     {
       "data": {
-        "id": "e34",
+        "id": "e30",
         "source": "Situation:painting_feedback_genuine_praise",
         "target": "Statement:stmt_great",
         "type": "HAS_STATEMENT"
@@ -616,7 +582,7 @@
     },
     {
       "data": {
-        "id": "e35",
+        "id": "e31",
         "source": "Situation:painting_feedback_genuine_praise",
         "target": "Context:They are looking at my painting",
         "type": "HAS_CONTEXT"
@@ -624,7 +590,7 @@
     },
     {
       "data": {
-        "id": "e36",
+        "id": "e32",
         "source": "Situation:painting_feedback_genuine_praise",
         "target": "SituationSignal:sig_b_literal",
         "type": "HAS_SIGNAL"
@@ -632,7 +598,7 @@
     },
     {
       "data": {
-        "id": "e37",
+        "id": "e33",
         "source": "Situation:painting_feedback_genuine_praise",
         "target": "SituationSignal:sig_b_expression",
         "type": "HAS_SIGNAL"
@@ -640,7 +606,7 @@
     },
     {
       "data": {
-        "id": "e38",
+        "id": "e34",
         "source": "Situation:painting_feedback_genuine_praise",
         "target": "SituationSignal:sig_b_tone",
         "type": "HAS_SIGNAL"
@@ -648,10 +614,42 @@
     },
     {
       "data": {
-        "id": "e39",
+        "id": "e35",
         "source": "Situation:painting_feedback_genuine_praise",
         "target": "SituationSignal:sig_b_context",
         "type": "HAS_SIGNAL"
+      }
+    },
+    {
+      "data": {
+        "id": "e36",
+        "source": "Person:Henry",
+        "target": "Statement:stmt_great",
+        "type": "SAID"
+      }
+    },
+    {
+      "data": {
+        "id": "e37",
+        "source": "Person:Henry",
+        "target": "Expression:awe",
+        "type": "HAS_EXPRESSION"
+      }
+    },
+    {
+      "data": {
+        "id": "e38",
+        "source": "Statement:stmt_great",
+        "target": "LiteralMeaning:praise",
+        "type": "HAS_LITERAL_MEANING"
+      }
+    },
+    {
+      "data": {
+        "id": "e39",
+        "source": "Statement:stmt_great",
+        "target": "Tone:enthusiastic_tone",
+        "type": "HAS_TONE"
       }
     },
     {
