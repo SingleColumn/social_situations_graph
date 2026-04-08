@@ -90,29 +90,8 @@ if (-not $currentBranch) {
     exit 1
 }
 
-$remoteHeadRef = (& git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>$null)
-$remoteDefaultBranch = $null
-if ($LASTEXITCODE -eq 0 -and $remoteHeadRef) {
-    $remoteDefaultBranch = ($remoteHeadRef -replace '^origin/', '').Trim()
-}
-
-$upstreamRef = (& git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>$null)
-$upstreamBranch = $null
-if ($LASTEXITCODE -eq 0 -and $upstreamRef) {
-    $upstreamBranch = ($upstreamRef -replace '^origin/', '').Trim()
-}
-
-$targetBranch = if ($remoteDefaultBranch) {
-    $remoteDefaultBranch
-} elseif ($upstreamBranch) {
-    $upstreamBranch
-} else {
-    $currentBranch
-}
-
 Write-Host ""
 Write-Host "Local branch: $currentBranch"
-Write-Host "Remote target branch: $targetBranch"
 
 Write-Host ""
 Write-Host "Staging allowed files (as controlled by .gitignore)..."
@@ -139,17 +118,11 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host ""
 if ($choice -eq "1") {
-    Write-Host "Pushing local HEAD to 'origin/$targetBranch'..."
-    Push-HeadToBranch -BranchName $targetBranch -Force $false
+    Write-Host "Pushing local HEAD to 'origin/$currentBranch'..."
+    Push-HeadToBranch -BranchName $currentBranch -Force $false
 } else {
-    $overwriteBranches = @($targetBranch, $currentBranch, 'master', 'main') |
-        Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
-        Select-Object -Unique
-
-    Write-Host "FORCE pushing local HEAD to these remote branches: $($overwriteBranches -join ', ')"
-    foreach ($branch in $overwriteBranches) {
-        Push-HeadToBranch -BranchName $branch -Force $true
-    }
+    Write-Host "FORCE pushing local HEAD to 'origin/$currentBranch'..."
+    Push-HeadToBranch -BranchName $currentBranch -Force $true
 }
 
 Write-Host ""
