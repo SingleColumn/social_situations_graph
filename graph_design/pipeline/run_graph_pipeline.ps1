@@ -126,6 +126,7 @@ $inputPath = Resolve-InputMarkdownPath $InputMarkdown
 $outputPath = Resolve-PathSafe $OutputDir
 $generatorScript = Resolve-ProjectPath ".\generate_neo4j_cypher_from_markdown.py"
 $exportScript = Resolve-ProjectPath ".\export_graph_to_cytoscape.py"
+$staticPagesScript = Resolve-ProjectPath ".\generate_static_pages_index.py"
 
 if (-not (Test-Path -LiteralPath $generatorScript)) {
     throw "Generator script not found: $generatorScript"
@@ -133,6 +134,10 @@ if (-not (Test-Path -LiteralPath $generatorScript)) {
 
 if (-not (Test-Path -LiteralPath $exportScript)) {
     throw "Export script not found: $exportScript"
+}
+
+if (-not (Test-Path -LiteralPath $staticPagesScript)) {
+    throw "Static Pages generator script not found: $staticPagesScript"
 }
 
 if (-not (Test-Path -LiteralPath $inputPath)) {
@@ -216,7 +221,7 @@ finally {
     }
 }
 
-Write-Host "[3/3] Exporting graph to cytoscape_elements.json..."
+Write-Host "[3/4] Exporting graph to cytoscape_elements.json..."
 $cytoscapeOutputPath = Resolve-ProjectPath "..\exports\cytoscape_elements.json"
 $env:OUTPUT_FILE = $cytoscapeOutputPath
 & $PythonCommand $exportScript
@@ -224,7 +229,15 @@ if ($LASTEXITCODE -ne 0) {
     throw "Cytoscape export failed."
 }
 
+Write-Host "[4/4] Generating static GitHub Pages index.html..."
+$staticIndexPath = Resolve-ProjectPath "..\..\index.html"
+& $PythonCommand $staticPagesScript --graph-json $cytoscapeOutputPath --output-html $staticIndexPath
+if ($LASTEXITCODE -ne 0) {
+    throw "Static GitHub Pages index generation failed."
+}
+
 Write-Host ""
 Write-Host "Pipeline completed successfully."
 Write-Host "- Loaded file: $($generatedCypher.Name)"
 Write-Host "- Cytoscape output: $cytoscapeOutputPath"
+Write-Host "- GitHub Pages index: $staticIndexPath"
