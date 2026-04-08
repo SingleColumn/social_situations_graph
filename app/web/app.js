@@ -458,5 +458,14 @@ fetch(buildApiUrl(`api/graph/full?v=${Date.now()}`), { cache: "no-store" })
   })
   .catch((err) => console.error("Error loading graph:", err));
 
+document.getElementById("exportBtn").addEventListener("click", () => {
+  if (!cy) return;
+  const png = cy.png({ scale: 3, full: false, bg: "#0f172a" });
+  const a = document.createElement("a");
+  a.href = png;
+  a.download = "graph.png";
+  a.click();
+});
+
 document.getElementById("interpretForm").addEventListener("submit", submitSituation);
 document.getElementById("previewButton").addEventListener("click", submitPreview);
