@@ -101,9 +101,11 @@ function buildTypeLayeredPositions(elements) {
 
 function classifyChannel(edgeType) {
   const literalTypes = new Set(["SAID", "HAS_EXPRESSION", "HAS_TONE", "HAS_LITERAL_MEANING", "HAS_CONTEXT", "HAS_SPEAKER", "HAS_STATEMENT"]);
-  const inferenceTypes = new Set(["HAS_SIGNAL", "INSTANCE_OF", "SUGGESTS", "DERIVED_AS", "REQUIRES", "PREDICTS"]);
+  const inferenceTypes = new Set(["HAS_SIGNAL", "INSTANCE_OF", "SUGGESTS", "DERIVED_AS"]);
+  const patternTypes = new Set(["REQUIRES", "PREDICTS"]);
   if (literalTypes.has(edgeType)) return "literal";
   if (inferenceTypes.has(edgeType)) return "inference";
+  if (patternTypes.has(edgeType)) return "pattern";
   return "other";
 }
 
@@ -167,6 +169,73 @@ async function submitSituation(event) {
   }
 }
 
+let cy = null;
+
+async function submitPreview() {
+  if (!cy) return;
+
+  const input = document.getElementById("situationInput");
+  const button = document.getElementById("previewButton");
+  const status = document.getElementById("previewStatus");
+  const value = input.value.trim();
+  if (!value) return;
+
+  button.disabled = true;
+  button.textContent = "Building preview...";
+  status.textContent = "";
+
+  cy.elements(".preview-element").remove();
+  cy.elements().removeClass("dimmed");
+
+  try {
+    const response = await fetch("/api/scenario/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ situation: value })
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload?.error || "Preview request failed.");
+    if (!payload.elements?.length) {
+      status.textContent = "No matching patterns found for this scenario.";
+      return;
+    }
+
+    const enriched = enrichElements(payload.elements);
+    const existingData = cy.elements().map((el) => ({ data: el.data() }));
+    const positions = buildTypeLayeredPositions([...existingData, ...enriched]);
+
+    cy.elements().addClass("dimmed");
+    const toAdd = enriched.map((el) => {
+      if (el.data.source !== undefined) return el;
+      const pos = positions[el.data.id];
+      return pos ? { ...el, position: pos } : el;
+    });
+    const previewCollection = cy.add(toAdd);
+    previewCollection.addClass("preview-element");
+
+    const previewNodes = previewCollection.filter("node");
+    if (previewNodes.nonempty()) cy.fit(previewCollection, 80);
+
+    const virtualCount = payload.elements.filter((e) => e.data.virtual && e.data.source === undefined).length;
+    const realCount = payload.elements.filter((e) => !e.data.virtual && e.data.source === undefined).length;
+    status.textContent = `Preview: ${virtualCount} virtual node${virtualCount !== 1 ? "s" : ""}, ${realCount} matched pattern node${realCount !== 1 ? "s" : ""}.`;
+  } catch (error) {
+    status.textContent = error instanceof Error ? error.message : String(error);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Preview Scenario";
+  }
+}
+
+function clearPreview() {
+  if (!cy) return;
+  cy.elements(".preview-element").remove();
+  cy.elements().removeClass("dimmed");
+  document.getElementById("previewStatus").textContent = "";
+  const visible = cy.elements(":visible");
+  if (visible.nonempty()) cy.fit(visible, 120);
+}
+
 fetch(`/api/graph/full?v=${Date.now()}`, { cache: "no-store" })
   .then((res) => res.json())
   .then((graph) => {
@@ -179,12 +248,14 @@ fetch(`/api/graph/full?v=${Date.now()}`, { cache: "no-store" })
     }
 
     const elements = enrichElements(graph.elements);
-    const cy = cytoscape({
+    cy = cytoscape({
       container: document.getElementById("cy"),
       elements,
       minZoom: 0.35,
       maxZoom: 3.5,
       wheelSensitivity: 0.15,
+      selectionType: "additive",
+      boxSelectionEnabled: true,
       style: [
         { selector: "node", style: { "background-color": "#4f46e5", label: "data(displayLabel)", color: "#e5e7eb", "font-size": 16, "text-valign": "center", "text-halign": "center", "text-wrap": "wrap", "text-max-width": "300px", "text-background-color": "#0f172a", "text-background-opacity": 0.9, "text-background-padding": 5, "text-border-color": "#334155", "text-border-width": 1, width: 56, height: 56 } },
         { selector: 'node[label = "Person"]', style: { shape: "ellipse" } },
@@ -207,7 +278,10 @@ fetch(`/api/graph/full?v=${Date.now()}`, { cache: "no-store" })
         { selector: 'edge.channel-inference[type = "PREDICTS"]', style: { "line-style": "solid", width: 5, "line-color": "#fbbf24", "target-arrow-color": "#fbbf24" } },
         { selector: 'edge.channel-inference[type = "DERIVED_AS"]', style: { "line-style": "solid", width: 2, "line-color": "#a78bfa", "target-arrow-color": "#a78bfa" } },
         { selector: "edge:selected", style: { label: "data(displayType)", width: 3, "line-color": "#cbd5e1", "target-arrow-color": "#cbd5e1" } },
-        { selector: "node.pattern-activated", style: { "background-color": "#f59e0b", "border-width": 4, "border-color": "#fde68a", "border-opacity": 1 } }
+        { selector: "node.pattern-activated", style: { "background-color": "#f59e0b", "border-width": 4, "border-color": "#fde68a", "border-opacity": 1 } },
+        { selector: "node[?virtual]", style: { "border-width": 3, "border-style": "dashed", "border-color": "#94a3b8", opacity: 0.9 } },
+        { selector: "node.dimmed", style: { opacity: 0.12 } },
+        { selector: "edge.dimmed", style: { opacity: 0.08 } }
       ],
       layout: { name: "preset", positions: buildTypeLayeredPositions(elements), animate: false, fit: true, padding: 150 }
     });
@@ -218,6 +292,7 @@ fetch(`/api/graph/full?v=${Date.now()}`, { cache: "no-store" })
         edge.addClass(`channel-${channel}`);
         if (channel === "literal") edge.connectedNodes().addClass("node-literal");
         else if (channel === "inference") edge.connectedNodes().addClass("node-inference");
+        else if (channel === "pattern") edge.connectedNodes().addClass("node-pattern");
       });
     });
 
@@ -285,6 +360,7 @@ fetch(`/api/graph/full?v=${Date.now()}`, { cache: "no-store" })
     function applyFilters() {
       const showLiteral = document.getElementById("toggleLiteral").checked;
       const showInference = document.getElementById("toggleInference").checked;
+      const showPattern = document.getElementById("togglePattern").checked;
       let scope;
       if (selectedSituationNodeId) {
         scope = getSituationSubgraph(selectedSituationNodeId);
@@ -298,11 +374,13 @@ fetch(`/api/graph/full?v=${Date.now()}`, { cache: "no-store" })
         scope.style("display", "element");
         scope.edges(".channel-literal").style("display", showLiteral ? "element" : "none");
         scope.edges(".channel-inference").style("display", showInference ? "element" : "none");
+        scope.edges(".channel-pattern").style("display", showPattern ? "element" : "none");
         scope.edges(".channel-other").style("display", showLiteral || showInference ? "element" : "none");
         scope.nodes().forEach((node) => {
           const isLiteralNode = node.hasClass("node-literal");
           const isInferenceNode = node.hasClass("node-inference");
-          const showNode = (showLiteral && isLiteralNode) || (showInference && isInferenceNode) || (!isLiteralNode && !isInferenceNode);
+          const isPatternNode = node.hasClass("node-pattern");
+          const showNode = (showLiteral && isLiteralNode) || (showInference && isInferenceNode) || (showPattern && isPatternNode) || (!isLiteralNode && !isInferenceNode && !isPatternNode);
           if (!showNode) node.style("display", "none");
         });
         if (!showVocabulary) {
@@ -346,6 +424,7 @@ fetch(`/api/graph/full?v=${Date.now()}`, { cache: "no-store" })
 
     document.getElementById("toggleLiteral").addEventListener("change", applyFilters);
     document.getElementById("toggleInference").addEventListener("change", applyFilters);
+    document.getElementById("togglePattern").addEventListener("change", applyFilters);
     document.getElementById("toggleEdgeLabels").addEventListener("change", applyEdgeLabelVisibility);
     document.getElementById("toggleVocabulary").addEventListener("change", () => {
       applyVocabularyVisibility();
@@ -363,3 +442,4 @@ fetch(`/api/graph/full?v=${Date.now()}`, { cache: "no-store" })
   .catch((err) => console.error("Error loading graph:", err));
 
 document.getElementById("interpretForm").addEventListener("submit", submitSituation);
+document.getElementById("previewButton").addEventListener("click", submitPreview);

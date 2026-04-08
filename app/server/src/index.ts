@@ -6,6 +6,9 @@ import { fileURLToPath } from "node:url";
 import { closeNeo4j, runCypher } from "./neo4j.js";
 import { interpretSituation } from "./interpret.js";
 import { interpretRequestSchema } from "./types.js";
+import { extractSignalTypes } from "./extract.js";
+import { previewQuery } from "./queries.js";
+import { buildPreviewElements, PreviewPatternRow } from "./preview.js";
 
 dotenv.config();
 
@@ -112,6 +115,25 @@ app.post("/api/interpret", async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       error: "Failed to interpret the situation.",
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+app.post("/api/scenario/preview", async (req, res) => {
+  const parse = interpretRequestSchema.safeParse(req.body);
+  if (!parse.success) {
+    return res.status(400).json({ error: parse.error.flatten() });
+  }
+
+  try {
+    const signals = await extractSignalTypes(parse.data.situation);
+    const patternRows = await runCypher<PreviewPatternRow>(previewQuery, { signals: signals.signals });
+    const elements = buildPreviewElements(signals, patternRows);
+    return res.json({ elements });
+  } catch (error) {
+    return res.status(500).json({
+      error: "Failed to build scenario preview.",
       details: error instanceof Error ? error.message : String(error)
     });
   }

@@ -28,15 +28,19 @@ A search term is pulled from the input:
 
 ## Step 2 — Template selection (`queries.ts: selectTemplate`)
 
-The input is scanned for keywords to pick the most appropriate Cypher query:
+The input is scanned for two classes of keyword to decide which Cypher query to run first:
 
-| Template | Trigger keywords | Matches on |
-|---|---|---|
-| `statement_text` | said, told, statement, `"` | `Statement.text` |
-| `tone_expression_context` | tone, expression, context, eye, smile | `Context.value` |
-| `fallback_signal_pattern` | (none of the above) | all `SituationSignal` → `Pattern` chains |
+- **Statement cues** — `said`, `told`, `statement`, or a `"` character. Suggest the input describes what someone said.
+- **Context cues** — `tone`, `expression`, `context`, `eye`, `smile`. Suggest the input describes observable cues.
 
-Templates are tried in order until one returns rows. If all return empty, the fallback runs unconditionally.
+Selection rules (in priority order):
+1. If statement cues are present → use `statement_text` (matches on `Statement.text`). Statement cues take priority even when context cues are also present.
+2. Else if context cues are present → use `tone_expression_context` (matches on `Context.value`).
+3. Else → use `fallback_signal_pattern` as the primary.
+
+**Trial order at query time** (`interpret.ts: interpretSituation`): the selected template runs first. If it returns no rows, the remaining non-fallback template is tried next. The `fallback_signal_pattern` always runs last. The first template to return rows wins; subsequent templates are skipped.
+
+The `fallback_signal_pattern` template does no text matching — it returns all situations and their full signal/pattern chains, making it a broad catch-all when the input text does not overlap with anything stored in the graph.
 
 ---
 

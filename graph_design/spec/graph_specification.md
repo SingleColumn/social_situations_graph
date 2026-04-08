@@ -53,45 +53,6 @@ Every node type that could be accidentally duplicated has an explicit uniqueness
 Without these rules, implementors can inadvertently share nodes that should be isolated (causing cross-situation contamination) or duplicate nodes that should be shared (causing missed pattern matches).
 
 ------------------------------------------------------------------------
-
-## Example Scenarios Table (HTML)
-
-<div style="width: 100%; overflow-x: auto;">
-  <table style="width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 11px; line-height: 1.25;">
-    <thead>
-      <tr style="white-space: normal !important; overflow-wrap: anywhere; word-break: break-word; overflow: visible; text-overflow: clip;">
-        <th style="padding: 6px;">Person</th>
-        <th style="padding: 6px;">Context</th>
-        <th style="padding: 6px;">Statement</th>
-        <th style="padding: 6px;">Tone</th>
-        <th style="padding: 6px;">Expression</th>
-        <th style="padding: 6px;">Literal_Meaning</th>
-        <th style="padding: 6px;">Intended_Meaning</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr style="white-space: normal !important; overflow-wrap: anywhere; word-break: break-word; overflow: visible; text-overflow: clip;">
-        <td style="padding: 6px;">Alice</td>
-        <td style="padding: 6px;">They are looking at my painting</td>
-        <td style="padding: 6px;">"Congratulations, it's definitely original"</td>
-        <td style="padding: 6px;">dry_tone</td>
-        <td style="padding: 6px;">eye_roll</td>
-        <td style="padding: 6px;">praise</td>
-        <td style="padding: 6px;">Sarcastic criticism (implies the painting is not good)</td>
-      </tr>
-      <tr style="white-space: normal !important; overflow-wrap: anywhere; word-break: break-word; overflow: visible; text-overflow: clip;">
-        <td style="padding: 6px;">Henry</td>
-        <td style="padding: 6px;">They are looking at my painting</td>
-        <td style="padding: 6px;">"It's great, it's very original"</td>
-        <td style="padding: 6px;">enthusiastic_tone</td>
-        <td style="padding: 6px;">awe</td>
-        <td style="padding: 6px;">praise</td>
-        <td style="padding: 6px;">Genuine compliment and praise</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
 ------------------------------------------------------------------------
 
 # 1. Graph Schema (Structure)

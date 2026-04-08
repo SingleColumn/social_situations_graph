@@ -16,6 +16,8 @@ build/
 
 # IDE/Editor
 .vscode/
+.claude/
+CLAUDE.md
 *.swp
 *.swo
 

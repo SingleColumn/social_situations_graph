@@ -14,8 +14,9 @@
       <div id="controls">
         <label><input id="toggleLiteral" type="checkbox" checked /> Literal channel</label>
         <label><input id="toggleInference" type="checkbox" checked /> Inference channel</label>
-        <label><input id="toggleEdgeLabels" type="checkbox" /> Edge labels</label>
+        <label><input id="togglePattern" type="checkbox" checked /> Pattern</label>
         <label><input id="toggleVocabulary" type="checkbox" /> Signal vocabulary</label>
+        <label><input id="toggleEdgeLabels" type="checkbox" /> Edge labels</label>
         <label class="situation-filter-label">
           Situation:
           <select id="situationFilter"><option value="">All</option></select>
@@ -30,12 +31,16 @@
 
     <div id="interpret-panel">
       <form id="interpretForm" class="stack">
-        <strong>Interpret a social situation</strong>
+        <strong>Analyse a social situation</strong>
         <textarea id="situationInput" placeholder="Example: My coworker said 'great job' with an eye roll after I made a mistake."></textarea>
-        <button id="submitButton" type="submit">Interpret Situation</button>
+        <div style="display:flex;gap:8px">
+          <button id="previewButton" type="button" class="secondary">Generate Preview</button>
+          <button id="submitButton" type="submit">Interpret</button>
+        </div>
       </form>
+      <div id="previewStatus"></div>
       <div id="results" class="results">
-        <div class="muted">Enter a situation to get likely interpretations.</div>
+        <div class="muted">Enter a situation above.</div>
       </div>
     </div>
 

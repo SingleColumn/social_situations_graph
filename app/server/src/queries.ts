@@ -86,6 +86,29 @@ export function selectTemplate(situation: string): QueryTemplate {
   return queryTemplates[2];
 }
 
+// Read-only query for scenario preview: finds Pattern + IntendedMeaning nodes
+// whose required SignalTypes are fully covered by the provided signal list.
+export const previewQuery = `
+UNWIND $signals AS sig
+MATCH (st:SignalType { kind: sig.kind, valueId: sig.valueId })
+WITH collect(st) AS matchedTypes,
+     collect({ neoId: elementId(st), kind: st.kind, valueId: st.valueId }) AS matchedSignalData
+
+MATCH (p:Pattern)
+WHERE all(req IN [(p)-[:REQUIRES]->(rs) | rs] WHERE req IN matchedTypes)
+
+OPTIONAL MATCH (p)-[pred:PREDICTS]->(im:IntendedMeaning)
+OPTIONAL MATCH (p)-[:REQUIRES]->(req_st:SignalType)
+
+RETURN
+  matchedSignalData,
+  elementId(p)    AS patternNeoId,
+  p.patternId     AS patternId,
+  p.description   AS patternDescription,
+  collect(DISTINCT { neoId: elementId(im), value: im.value, probability: pred.probability }) AS predictions,
+  collect(DISTINCT { neoId: elementId(req_st), kind: req_st.kind, valueId: req_st.valueId }) AS requiredSignalTypes
+`;
+
 export function extractTerm(situation: string): string {
   const cleaned = situation.trim().replace(/\s+/g, " ");
   if (!cleaned) return "";
