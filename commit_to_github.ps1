@@ -27,12 +27,12 @@ function Push-HeadToBranch {
         [bool]$Force
     )
 
-    $args = @('push', '-u', 'origin', "HEAD:refs/heads/$BranchName")
+    $gitArgs = @('push', '-u', 'origin', "HEAD:refs/heads/$BranchName")
     if ($Force) {
-        $args += '--force'
+        $gitArgs += '--force'
     }
 
-    Invoke-GitOrAbort -Args $args -ErrorMessage "Push to branch '$BranchName' failed. Please check your branch name and authentication."
+    Invoke-GitOrAbort -Args $gitArgs -ErrorMessage "Push to branch '$BranchName' failed. Please check your branch name and authentication."
 }
 
 Write-Host ""
