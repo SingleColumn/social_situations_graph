@@ -3,6 +3,23 @@ function prettifyType(type) {
   return String(type).replace(/_/g, " ");
 }
 
+const PAGE_BASE_PATH = (() => {
+  const path = window.location.pathname || "/";
+  const marker = "/app/web/";
+  const markerIndex = path.indexOf(marker);
+  if (markerIndex >= 0) {
+    return path.slice(0, markerIndex + 1);
+  }
+  if (path.endsWith("/")) return path;
+  const lastSlashIndex = path.lastIndexOf("/");
+  return lastSlashIndex >= 0 ? path.slice(0, lastSlashIndex + 1) : "/";
+})();
+
+function buildApiUrl(route) {
+  const normalizedRoute = String(route || "").replace(/^\/+/, "");
+  return new URL(normalizedRoute, `${window.location.origin}${PAGE_BASE_PATH}`).toString();
+}
+
 function fallbackLabel(data) {
   if (!data) return "";
   if (data.neo4jId) return String(data.neo4jId);
@@ -148,7 +165,7 @@ async function submitSituation(event) {
   button.textContent = "Interpreting...";
 
   try {
-    const response = await fetch("/api/interpret", {
+    const response = await fetch(buildApiUrl("api/interpret"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ situation: value })
@@ -188,7 +205,7 @@ async function submitPreview() {
   cy.elements().removeClass("dimmed");
 
   try {
-    const response = await fetch("/api/scenario/preview", {
+    const response = await fetch(buildApiUrl("api/scenario/preview"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ situation: value })
@@ -236,7 +253,7 @@ function clearPreview() {
   if (visible.nonempty()) cy.fit(visible, 120);
 }
 
-fetch(`/api/graph/full?v=${Date.now()}`, { cache: "no-store" })
+fetch(buildApiUrl(`api/graph/full?v=${Date.now()}`), { cache: "no-store" })
   .then((res) => res.json())
   .then((graph) => {
     if (!Array.isArray(graph?.elements) || graph.elements.length === 0) {
